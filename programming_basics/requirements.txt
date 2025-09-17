@@ -1,0 +1,5 @@
+mypy>=1.18.1,<2.0.0
+streamlit>=1.49.1,<2.0.0
+xarray==2025.6.1  # uses calver, instead of semver
+matplotlib>=3.10.6,<4.0.0
+
