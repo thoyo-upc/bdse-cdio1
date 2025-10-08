@@ -4,6 +4,7 @@ import numpy as np
 from scipy.ndimage import uniform_filter
 import geopandas as gpd
 import matplotlib.pyplot as plt
+from skimage.restoration import denoise_bilateral
 
 
 def normalize_image(img):
@@ -12,17 +13,18 @@ def normalize_image(img):
     return (img_stretched - p2) / (p98 - p2)
 
 
-def show_green_nir(green, nir):
-    green_norm = normalize_image(green)
-    nir_norm = normalize_image(nir)
+def show_green_nir(green, nir, green_filt, nir_filt):
+    fig, axs = plt.subplots(2, 2, figsize=(12, 6), sharex=True, sharey=True)
 
-    fig, axs = plt.subplots(2, 1, figsize=(12, 6), sharex=True, sharey=True)
-
-    axs[0].imshow(green_norm, cmap="gray")
-    axs[0].set_title("Green Band")
-    axs[1].imshow(nir_norm, cmap="gray")
-    axs[1].set_title("NIR Band")
-
+    axs[0, 0].imshow(green, cmap="gray")
+    axs[0, 0].set_title("Green Band")
+    axs[0, 1].imshow(nir, cmap="gray")
+    axs[0, 1].set_title("NIR Band")
+    axs[1, 0].imshow(green_filt, cmap="gray")
+    axs[1, 0].set_title("Green Band (filtered)")
+    axs[1, 1].imshow(nir_filt, cmap="gray")
+    axs[1, 1].set_title("NIR Band (filtered)")
+    
     plt.tight_layout()
     plt.show()
 
@@ -54,14 +56,21 @@ def main(green_path, nir_path, aoi_path, denoising_methid):
         green_crop = crop_to_aoi(green, aoi_proj, gsrc.transform)
         nir_crop = crop_to_aoi(nir, aoi_proj, nsrc.transform)
 
-    if denoising_methid == "none":
-        green_crop_filter = green_crop
-        nir_crop_filter = nir_crop
-    elif denoising_methid == "boxcar_4x4":
-        green_crop_filter = uniform_filter(green_crop, size=4, mode="reflect")
-        nir_crop_filter = uniform_filter(nir_crop, size=4, mode="reflect")
+    green_crop_norm = normalize_image(green_crop)
+    nir_crop_norm = normalize_image(nir_crop)
 
-    show_green_nir(green_crop_filter, nir_crop_filter)
+    if denoising_methid == "boxcar_4x4":
+        green_crop_norm_filter = uniform_filter(green_crop_norm, size=4, mode="reflect")
+        nir_crop_norm_filter = uniform_filter(nir_crop_norm, size=4, mode="reflect")
+    elif denoising_methid == "bilateral":
+        green_crop_norm_filter = denoise_bilateral(
+            green_crop_norm, sigma_color=0.1, sigma_spatial=2, channel_axis=None
+        )
+        nir_crop_norm_filter = denoise_bilateral(
+            nir_crop_norm, sigma_color=0.1, sigma_spatial=2, channel_axis=None
+        )
+
+    show_green_nir(green_crop_norm, nir_crop_norm, green_crop_norm_filter, nir_crop_norm_filter)
 
 
 if __name__ == "__main__":
