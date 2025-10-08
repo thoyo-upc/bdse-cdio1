@@ -1,6 +1,7 @@
 import rasterio
 from rasterio.features import geometry_mask
 import numpy as np
+from scipy.ndimage import uniform_filter
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
@@ -43,7 +44,7 @@ def crop_to_aoi(image, aoi_proj, transform):
     return masked_image[row_min:row_max+1, col_min:col_max+1]
 
 
-def main(green_path, nir_path, aoi_path):
+def main(green_path, nir_path, aoi_path, denoising_methid):
     gdf = gpd.read_file(aoi_path)
     aoi_gdf = gpd.GeoDataFrame(geometry=[gdf.geometry[0]], crs=gdf.crs)
     with rasterio.open(green_path) as gsrc, rasterio.open(nir_path) as nsrc:
@@ -53,8 +54,14 @@ def main(green_path, nir_path, aoi_path):
         green_crop = crop_to_aoi(green, aoi_proj, gsrc.transform)
         nir_crop = crop_to_aoi(nir, aoi_proj, nsrc.transform)
 
-    show_green_nir(green_crop, nir_crop)
-    # show_green_nir(green, nir)
+    if denoising_methid == "none":
+        green_crop_filter = green_crop
+        nir_crop_filter = nir_crop
+    elif denoising_methid == "boxcar_4x4":
+        green_crop_filter = uniform_filter(green_crop, size=4, mode="reflect")
+        nir_crop_filter = uniform_filter(nir_crop, size=4, mode="reflect")
+
+    show_green_nir(green_crop_filter, nir_crop_filter)
 
 
 if __name__ == "__main__":
@@ -82,6 +89,13 @@ if __name__ == "__main__":
         required=True,
         help="Path to the location where the aoi geojson is located"
     )
+    parser.add_argument(
+        "-d",
+        "--denoising-method",
+        type=str,
+        choices=["none", "boxcar_4x4", "bilateral"],
+        required=True,
+    )
     args = parser.parse_args()
 
-    main(args.green, args.nir, args.aoi_path)
+    main(args.green, args.nir, args.aoi_path, args.denoising_method)
