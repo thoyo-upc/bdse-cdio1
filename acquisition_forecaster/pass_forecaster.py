@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from skyfield.api import EarthSatellite, load, wgs84
 import json
 
-ELEVATION_MIN_DEG = 10
+ELEVATION_MIN_DEG = 0
 STEP_SECONDS = 30
 
 def overflight_times(project):
@@ -21,14 +21,13 @@ def overflight_times(project):
     end_utc = datetime.strptime(config["END_DATE"], "%Y-%m-%d") + timedelta(days=1)
 
     passes = []
+    current_pass_start = None
 
     t = start_utc
     while t < end_utc:
-        # current altitude
         tf = ts.utc(t.year, t.month, t.day, t.hour, t.minute, t.second)
         alt_now = (sat - observer).at(tf).altaz()[0].degrees
 
-        # next step
         t_next = t + timedelta(seconds=STEP_SECONDS)
         if t_next > end_utc:
             t_next = end_utc
@@ -39,17 +38,29 @@ def overflight_times(project):
         )
         alt_next = (sat - observer).at(tf_next).altaz()[0].degrees
 
-        # Look for crossing from below -> above
-        if alt_now < ELEVATION_MIN_DEG <= alt_next and alt_next != alt_now:
-            # Linear interpolation between t and t_next
+        # ---- PASS START: below -> above ----
+        if alt_now < ELEVATION_MIN_DEG <= alt_next and current_pass_start is None:
             frac = (ELEVATION_MIN_DEG - alt_now) / (alt_next - alt_now)
             dt_sec = (t_next - t).total_seconds()
             t_cross = t + timedelta(seconds=frac * dt_sec)
-            passes.append(t_cross)  # store naive UTC datetime
+            current_pass_start = t_cross
+
+        # ---- PASS END: above -> below ----
+        if alt_now >= ELEVATION_MIN_DEG > alt_next and current_pass_start is not None:
+            frac = (ELEVATION_MIN_DEG - alt_now) / (alt_next - alt_now)
+            dt_sec = (t_next - t).total_seconds()
+            t_cross = t + timedelta(seconds=frac * dt_sec)
+            passes.append((current_pass_start, t_cross))
+            current_pass_start = None
 
         t = t_next
 
+    # If the satellite was above at the end of window, close the pass
+    if current_pass_start is not None:
+        passes.append((current_pass_start, end_utc))
+
     return passes
+
 
 
 # Example usage:
@@ -59,11 +70,11 @@ if __name__ == "__main__":
     parser.add_argument("--project", type=str, required=True, help="Project name")
     args = parser.parse_args()
 
-    ts_over_list = overflight_times(args.project)
+    pass_list = overflight_times(args.project)
 
-    if not ts_over_list:
+    if not pass_list:
         print(f"No overflights above {ELEVATION_MIN_DEG}° in the given interval.")
     else:
         print(f"Overflights above {ELEVATION_MIN_DEG}°:")
-        for i, ts_over in enumerate(ts_over_list, start=1):
-            print(f"  #{i}: {ts_over} UTC")
+        for i, (start, end) in enumerate(pass_list, start=1):
+            print(f"  #{i}: {start}  →  {end} UTC")
