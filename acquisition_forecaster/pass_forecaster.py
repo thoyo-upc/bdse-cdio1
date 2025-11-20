@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-from html.parser import endtagfind
 from skyfield.api import EarthSatellite, load, wgs84
 import json
 
 ELEVATION_MIN_DEG = 10
 STEP_SECONDS = 30
 
-def next_overflight_times(project):
+def overflight_times(project):
     config = json.load(open(f"acquisition_forecaster/projects/{project}/input/config.json"))
     tle_path = f"acquisition_forecaster/projects/{project}/input/tle"
     with open(tle_path, "r") as f:
@@ -20,6 +19,9 @@ def next_overflight_times(project):
 
     start_utc = datetime.strptime(config["START_DATE"], "%Y-%m-%d")
     end_utc = datetime.strptime(config["END_DATE"], "%Y-%m-%d") + timedelta(days=1)
+
+    passes = []
+
     t = start_utc
     while t < end_utc:
         # current altitude
@@ -31,30 +33,37 @@ def next_overflight_times(project):
         if t_next > end_utc:
             t_next = end_utc
 
-        tf_next = ts.utc(t_next.year, t_next.month, t_next.day,
-                         t_next.hour, t_next.minute, t_next.second)
+        tf_next = ts.utc(
+            t_next.year, t_next.month, t_next.day,
+            t_next.hour, t_next.minute, t_next.second
+        )
         alt_next = (sat - observer).at(tf_next).altaz()[0].degrees
 
         # Look for crossing from below -> above
-        if alt_now < ELEVATION_MIN_DEG <= alt_next:
+        if alt_now < ELEVATION_MIN_DEG <= alt_next and alt_next != alt_now:
             # Linear interpolation between t and t_next
             frac = (ELEVATION_MIN_DEG - alt_now) / (alt_next - alt_now)
             dt_sec = (t_next - t).total_seconds()
             t_cross = t + timedelta(seconds=frac * dt_sec)
-            return t_cross  # naive UTC datetime
+            passes.append(t_cross)  # store naive UTC datetime
 
         t = t_next
 
-    return None
+    return passes
 
 
 # Example usage:
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Estimate next satellite pass time")
+    parser = argparse.ArgumentParser(description="Estimate satellite pass times")
     parser.add_argument("--project", type=str, required=True, help="Project name")
     args = parser.parse_args()
 
-    ts_over = next_overflight_times(args.project)
+    ts_over_list = overflight_times(args.project)
 
-    print(f"Next overflight above {ELEVATION_MIN_DEG}°:", ts_over, "UTC")
+    if not ts_over_list:
+        print(f"No overflights above {ELEVATION_MIN_DEG}° in the given interval.")
+    else:
+        print(f"Overflights above {ELEVATION_MIN_DEG}°:")
+        for i, ts_over in enumerate(ts_over_list, start=1):
+            print(f"  #{i}: {ts_over} UTC")
