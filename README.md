@@ -39,3 +39,22 @@ Run it with:
 python <filename.py>
 ```
 
+## Session 19: acquisition forecasting
+
+Parse acquisition plans and check when a given area will be captured by a satellite for a time range, with data from 
+https://sentinels.copernicus.eu/copernicus/sentinel-2/acquisition-plans
+``` 
+(_env) % python -m acquisition_forecaster.plan_parser --project eetac_27_11_25
+               capture_start             capture_end                                            polygon satellite acquisition_type
+1831 2025-11-27 10:44:26.245 2025-11-27 11:00:47.621  POLYGON ((12.03657 60.75446, 9.48874 61.16696,...       S2C     NOBS NOMINAL
+```
+
+Run historical analysis to acquire past capture dates
+``` 
+(_env) % python -m acquisition_forecaster.historical_analysis --project eetac_2025 --action acquire
+``` 
+
+Plot historical analysis results
+``` 
+(_env) % python -m acquisition_forecaster.historical_analysis --project eetac_2025 --action plot
+```
