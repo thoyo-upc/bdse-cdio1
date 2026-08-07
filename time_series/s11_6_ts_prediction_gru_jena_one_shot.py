@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from keras import Input
 from keras.models import Sequential, load_model
-from keras.layers import LSTM, Dense
+from keras.layers import GRU, Dense
 
 """
 Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Germany, 
@@ -18,7 +18,6 @@ under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 
 data_file = "data/jena_daily_temp_2009_2017.csv"
 model_dir = "models"
-output_dir = "output"
 
 ### SLIDING WINDOW CONFIGURATION
 WINDOW  = 365  # days
@@ -26,15 +25,9 @@ HORIZON = 365  # days
 STRIDE  =   1  # days
 
 # MODEL CONFIGURATION
-LSTM_UNITS = 50
+GRU_UNITS  = 50
 EPOCHS     = 20
 BATCH_SIZE = 32
-
-
-os.makedirs(model_dir, exist_ok=True)
-os.makedirs(output_dir, exist_ok=True)
-
-model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{STRIDE}"
 
 """ 
 1. Data Collection
@@ -46,7 +39,7 @@ model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{
    - Create sliding windows
 
 3. Model Development
-   - Define LSTM architecture
+   - Define GRU architecture
    - Train the model
 
 4. Model Evaluation
@@ -106,8 +99,13 @@ test_ts = ts["2017"]
 # 2. 3. AVOID RETRAINING IF MODEL ALREADY EXISTS
 #########################################################################
 
-model_file = f"{model_dir}/{model_name}.keras"
-scaler_file = f"{model_dir}/{model_name}.scaler"
+os.makedirs(model_dir, exist_ok=True)
+model_file = (
+   f"{model_dir}/"
+   f"gru_w{WINDOW}_h{HORIZON}_s{STRIDE}_"
+   f"u{GRU_UNITS}_e{EPOCHS}_b{BATCH_SIZE}.keras"
+)
+scaler_file = model_file.replace(".keras", ".scaler")
 
 if os.path.exists(model_file) and os.path.exists(scaler_file):
    print(f"\n=== Loading existing model ===\n")
@@ -150,12 +148,11 @@ else:
 
    print(f"\n=== Training new model ===\n")
 
-   # Build LSTM model
    model = Sequential([
-      Input(shape=(WINDOW, 1)),
-      LSTM(LSTM_UNITS),
-      Dense(HORIZON)
-      ])
+        Input(shape=(WINDOW, 1)),
+        GRU(GRU_UNITS),
+        Dense(HORIZON)
+        ])
 
    model.compile(optimizer='adam', 
                  loss='mse', 
@@ -181,7 +178,7 @@ else:
    final_mae  = history.history['mae'][-1]
    final_r2   = history.history['r2_score'][-1]
 
-   print("\nTraining metrics (normalized values!):")
+   print("\nTraining metrics:")
    print(f"  MAE  = {final_mae:.3f} ")
    print(f"  RMSE = {final_rmse:.3f} ")
    print(f"  R²   = {final_r2:.3f}")  
@@ -191,7 +188,7 @@ else:
    val_mae  = history.history['val_mae'][-1]
    val_r2   = history.history['val_r2_score'][-1]
 
-   print("\nValidation metrics (normalized values!):")
+   print("\nValidation metrics:")
    print(f"  MAE  = {val_mae:.3f} ")
    print(f"  RMSE = {val_rmse:.3f} ")
    print(f"  R²   = {val_r2:.3f}")  
@@ -206,7 +203,6 @@ else:
    plt.ylabel('Loss (MSE)')
    plt.title('Training vs. Validation Loss')
    plt.legend()
-   plt.savefig(f"{output_dir}/{model_name}_loss_curve.png", dpi=300)
    plt.show()   
 
    # Save model
@@ -225,7 +221,7 @@ print(f"\n=== Model Evaluation ===\n")
 # Use the last WINDOW days from the training period (end of 2016)
 window_data = train_scaled[-WINDOW:].copy()
 
-# Reshape to LSTM input format: (samples, timesteps, features)
+# Reshape to GRU input format: (samples, timesteps, features)
 X_input = window_data.reshape(1, WINDOW, 1)
 
 # Predict all 365 days of 2017 in a single forward pass
@@ -260,25 +256,23 @@ observed_ts = pd.Series(y_true.flatten(), index=prediction_dates)
 plt.figure(figsize=(12, 4))
 plt.plot(train_ts.index, train_ts.values, linewidth=0.5, alpha=0.5, c='C0', label='Training Data')
 plt.plot(test_ts.index, test_ts.values, linewidth=0.5, c='C2', label='Observed 2017')
-plt.plot(prediction_ts.index, prediction_ts.values, linewidth=1, c='C3', label='LSTM Prediction')
+plt.plot(prediction_ts.index, prediction_ts.values, linewidth=1, c='C3', label='GRU Prediction')
 plt.xlabel('Date')
 plt.ylabel('Temperature (°C)')
-plt.title('Daily Temperature: Historical Data and LSTM Forecast (One-Shot)')
+plt.title('Daily Temperature: Historical Data and GRU Forecast (One-Shot)')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig(f"{output_dir}/{model_name}_forecast.png", dpi=300)
 plt.show()
 
 # Plot results
 plt.figure(figsize=(12, 5))
 plt.plot(test_ts.index, test_ts.values, linewidth=1, c='C2', label='Observed 2017')
-plt.plot(prediction_ts.index, prediction_ts.values, linewidth=1, c='C3', label='LSTM Prediction')
+plt.plot(prediction_ts.index, prediction_ts.values, linewidth=1, c='C3', label='GRU Prediction')
 plt.title("Daily Temperature Forecast (2017)")
 plt.xlabel("Date")
 plt.ylabel("Temperature (°C)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"{output_dir}/{model_name}_forecast_zoom.png", dpi=300)
 plt.show()

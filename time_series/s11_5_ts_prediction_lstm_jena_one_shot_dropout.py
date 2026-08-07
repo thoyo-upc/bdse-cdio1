@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from keras import Input
 from keras.models import Sequential, load_model
-from keras.layers import LSTM, Dense
+from keras.layers import LSTM, Dense, Dropout
 
 """
 Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Germany, 
@@ -27,6 +27,7 @@ STRIDE  =   1  # days
 
 # MODEL CONFIGURATION
 LSTM_UNITS = 50
+DROPOUT    = 0.2
 EPOCHS     = 20
 BATCH_SIZE = 32
 
@@ -34,7 +35,7 @@ BATCH_SIZE = 32
 os.makedirs(model_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
-model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{STRIDE}"
+model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{STRIDE}_d{round(100*DROPOUT)}"
 
 """ 
 1. Data Collection
@@ -154,6 +155,7 @@ else:
    model = Sequential([
       Input(shape=(WINDOW, 1)),
       LSTM(LSTM_UNITS),
+      Dropout(DROPOUT),
       Dense(HORIZON)
       ])
 

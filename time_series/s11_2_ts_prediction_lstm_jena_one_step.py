@@ -18,6 +18,7 @@ under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 
 data_file = "data/jena_daily_temp_2009_2017.csv"
 model_dir = "models"
+output_dir = "output"
 
 # SLIDING WINDOW CONFIGURATION
 WINDOW  = 90  # days
@@ -28,6 +29,11 @@ STRIDE  =  1  # days
 LSTM_UNITS = 50
 EPOCHS     = 20
 BATCH_SIZE = 32
+
+os.makedirs(model_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
+
+model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{STRIDE}"
 
 """ 
 1. Data Collection
@@ -98,13 +104,8 @@ plt.show()
 # 2-3. AVOID RETRAINING IF MODEL ALREADY EXISTS
 #########################################################################
 
-os.makedirs(model_dir, exist_ok=True)
-model_file = (
-   f"{model_dir}/"
-   f"lstm_w{WINDOW}_h{HORIZON}_s{STRIDE}_"
-   f"u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}.keras"
-)
-scaler_file = model_file.replace(".keras", ".scaler")
+model_file = f"{model_dir}/{model_name}.keras"
+scaler_file = f"{model_dir}/{model_name}.scaler"
 
 if os.path.exists(model_file) and os.path.exists(scaler_file):
    print(f"\n=== Loading existing model ===\n")
@@ -178,9 +179,9 @@ else:
    final_mae  = history.history['mae'][-1]
    final_r2   = history.history['r2_score'][-1]
 
-   print("\nTraining metrics:")
-   print(f"  MAE  = {final_mae:.3f} °C")
-   print(f"  RMSE = {final_rmse:.3f} °C")
+   print("\nTraining metrics (normalized values!):")
+   print(f"  MAE  = {final_mae:.3f} ")
+   print(f"  RMSE = {final_rmse:.3f} ")
    print(f"  R²   = {final_r2:.3f}")  
 
    # Metrics from the last validation epoch
@@ -188,9 +189,9 @@ else:
    val_mae  = history.history['val_mae'][-1]
    val_r2   = history.history['val_r2_score'][-1]
 
-   print("\nValidation metrics:")
-   print(f"  MAE  = {val_mae:.3f} °C")
-   print(f"  RMSE = {val_rmse:.3f} °C")
+   print("\nValidation metrics (normalized values!):")
+   print(f"  MAE  = {val_mae:.3f} ")
+   print(f"  RMSE = {val_rmse:.3f} ")
    print(f"  R²   = {val_r2:.3f}")  
 
    # Loss curve (train vs. validation)
@@ -203,6 +204,7 @@ else:
    plt.ylabel('Loss (MSE)')
    plt.title('Training vs. Validation Loss')
    plt.legend()
+   plt.savefig(f"{output_dir}/{model_name}_loss_curve.png", dpi=300)
    plt.show()
 
    # Addtional metrics: MAE is useful here (°C, easier to interpret)
@@ -272,6 +274,7 @@ plt.title('Daily Temperature: Historical Data and LSTM Forecast (one-step ahead)
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
+plt.savefig(f"{output_dir}/{model_name}_forecast.png", dpi=300)
 plt.show()
 
 # Plot results
@@ -284,5 +287,6 @@ plt.ylabel("Temperature (°C)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig(f"{output_dir}/{model_name}_forecast_zoom.png", dpi=300)
 plt.show()
 
