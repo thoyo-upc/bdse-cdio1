@@ -1,11 +1,14 @@
 PySide6>=6.11.1,<7.0.0
 geopandas>=1.1.4,<2.0.0
+joblib>=1.5.3,<2.0.0
+keras>=3.15.1,<4.0.0
 matplotlib>=3.11.1,<4.0.0
 mypy>=1.20.2,<2.0.0
 pandas>=3.0.5,<4.0.0
 pyproj>=3.7.2,<4.0.0
 rasterio>=1.5.0,<2.0.0
 scikit-image>=0.26.0,<1.0.0
+scikit-learn>=1.9.0,<2.0.0
 scipy>=1.18.0,<2.0.0
 skyfield>=1.53,<2.0.0
 streamlit>=1.60.0,<2.0.0
