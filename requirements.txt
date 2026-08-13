@@ -1,14 +1,13 @@
-mypy>=1.18.1,<2.0.0
-streamlit>=1.49.1,<2.0.0
-xarray==2025.6.1  # uses calver, instead of semver
-matplotlib>=3.10.6,<4.0.0
-PySide6>=6.9.2,<7.0.0
-geopandas
-pandas
-pyproj
-scipy
-scikit-image
-rasterio>=1.4.3,<2.0.0
-skyfield==1.53
-tqdm
-
+PySide6>=6.11.1,<7.0.0
+geopandas>=1.1.4,<2.0.0
+matplotlib>=3.11.1,<4.0.0
+mypy>=1.20.2,<2.0.0
+pandas>=3.0.5,<4.0.0
+pyproj>=3.7.2,<4.0.0
+rasterio>=1.5.0,<2.0.0
+scikit-image>=0.26.0,<1.0.0
+scipy>=1.18.0,<2.0.0
+skyfield>=1.53,<2.0.0
+streamlit>=1.60.0,<2.0.0
+tqdm>=4.70.0,<5.0.0
+xarray>=2025.6.1,<2026.0.0  # uses calver, instead of semver
