@@ -11,4 +11,8 @@ scikit-image
 rasterio>=1.4.3,<2.0.0
 skyfield==1.53
 tqdm
-
+joblib
+keras
+numpy
+pandas
+scikit-learn
