@@ -11,7 +11,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 def search_catalog(catalog):
     if catalog == "copernicus":
-        catalog_url = "https://stac.dataspace.copernicus.eu/v1/"
+        catalog_url = "https://stac.dataspace.copernicus.eu/v1"
     elif catalog == "element84":
         catalog_url = "https://earth-search.aws.element84.com/v1"
     else:
