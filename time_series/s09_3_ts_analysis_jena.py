@@ -2,6 +2,7 @@
 Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Germany, 
 under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 """
+from pathlib import Path
 import json
 import pandas as pd
 import numpy as np
@@ -21,10 +22,11 @@ print("=" * 70)
 
 print("\n[1] LOADING DATA...\n")
 
-file = "data/jena_climate_2009_2016.csv.zip"
-df = pd.read_csv(file)
+data_dir = Path(__file__).parent / "data"
+jena_csv = data_dir / "jena_climate_2009_2016.csv.zip"
+df = pd.read_csv(jena_csv)
 
-print(f"Data loaded from {file}\n")
+print(f"Data loaded from {jena_csv}\n")
 print(df.info())
 print(f"\nFirst rows:\n{df.head(3)}")
 print(f"\nLast rows:\n{df.tail(3)}")
@@ -103,7 +105,7 @@ plt.show()
 ts = ts_daily.copy()
 
 # Save the cleaned and resampled series for future use
-output_file = "data/jena_climate_2009_2016_daily_temperature.csv"
+output_file = data_dir / "jena_climate_2009_2016_daily_temperature.csv"
 ts.to_csv(output_file)
 
 # ============================================================================

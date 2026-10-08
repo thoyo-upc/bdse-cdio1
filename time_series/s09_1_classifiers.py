@@ -3,6 +3,7 @@
 #   - matplotlib
 #   - scikit-learn
 
+from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
@@ -17,7 +18,9 @@ from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 
 # Step 1 - Load dataset
-iris = pd.read_csv("data/iris.csv")
+data_dir = Path(__file__).parent / "data"
+iris_csv = data_dir / "iris.csv"
+iris = pd.read_csv(iris_csv)
 
 # Step 2 - Explore data
 print("=== Dataset information  ===")
