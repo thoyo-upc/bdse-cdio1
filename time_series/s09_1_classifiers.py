@@ -18,7 +18,7 @@ from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 
 # Step 1 - Load dataset
-data_dir = Path(__file__).parent / "data"
+data_dir = Path(__file__).resolve().parent / "data"
 iris_csv = data_dir / "iris.csv"
 iris = pd.read_csv(iris_csv)
 

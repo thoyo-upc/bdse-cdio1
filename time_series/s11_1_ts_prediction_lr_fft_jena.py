@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Ger
 under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 """
 
-data_file = "data/jena_daily_temp_2009_2017.csv"
+data_file = Path(__file__).resolve().parent / "data" / "jena_daily_temp_2009_2017.csv"
 
 #########################################################################
 # 1. LOAD DATA 

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'          # desactiva mensajes de oneDNN
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'           # silencia logs de TF (0=all, 3=only errors)
 import joblib
@@ -16,9 +17,10 @@ Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Ger
 under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 """
 
-data_file = "data/jena_daily_temp_2009_2017.csv"
-model_dir = "models"
-output_dir = "output"
+script_dir = Path(__file__).resolve().parent
+data_file = script_dir / "data" / "jena_daily_temp_2009_2017.csv"
+model_dir = script_dir / "models"
+output_dir = script_dir / "output"
 
 # SLIDING WINDOW CONFIGURATION
 WINDOW  = 90  # days
@@ -30,8 +32,8 @@ LSTM_UNITS = 50
 EPOCHS     = 20
 BATCH_SIZE = 32
 
-os.makedirs(model_dir, exist_ok=True)
-os.makedirs(output_dir, exist_ok=True)
+model_dir.mkdir(parents=True, exist_ok=True)
+output_dir.mkdir(parents=True, exist_ok=True)
 
 model_name =f"lstm_u{LSTM_UNITS}_e{EPOCHS}_b{BATCH_SIZE}_w{WINDOW}_h{HORIZON}_s{STRIDE}"
 
@@ -104,10 +106,10 @@ plt.show()
 # 2-3. AVOID RETRAINING IF MODEL ALREADY EXISTS
 #########################################################################
 
-model_file = f"{model_dir}/{model_name}.keras"
-scaler_file = f"{model_dir}/{model_name}.scaler"
+model_file = model_dir / f"{model_name}.keras"
+scaler_file = model_dir / f"{model_name}.scaler"
 
-if os.path.exists(model_file) and os.path.exists(scaler_file):
+if model_file.is_file() and scaler_file.is_file():
    print(f"\n=== Loading existing model ===\n")
 
    print(f"Loading model: {model_file}")
@@ -204,7 +206,7 @@ else:
    plt.ylabel('Loss (MSE)')
    plt.title('Training vs. Validation Loss')
    plt.legend()
-   plt.savefig(f"{output_dir}/{model_name}_loss_curve.png", dpi=300)
+   plt.savefig(output_dir / f"{model_name}_loss_curve.png", dpi=300)
    plt.show()
 
    # Addtional metrics: MAE is useful here (°C, easier to interpret)
@@ -274,7 +276,7 @@ plt.title('Daily Temperature: Historical Data and LSTM Forecast (one-step ahead)
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig(f"{output_dir}/{model_name}_forecast.png", dpi=300)
+plt.savefig(output_dir / f"{model_name}_forecast.png", dpi=300)
 plt.show()
 
 # Plot results
@@ -287,6 +289,5 @@ plt.ylabel("Temperature (°C)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"{output_dir}/{model_name}_forecast_zoom.png", dpi=300)
+plt.savefig(output_dir / f"{model_name}_forecast_zoom.png", dpi=300)
 plt.show()
-

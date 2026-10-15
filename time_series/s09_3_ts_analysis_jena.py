@@ -22,7 +22,7 @@ print("=" * 70)
 
 print("\n[1] LOADING DATA...\n")
 
-data_dir = Path(__file__).parent / "data"
+data_dir = Path(__file__).resolve().parent / "data"
 jena_csv = data_dir / "jena_climate_2009_2016.csv.zip"
 df = pd.read_csv(jena_csv)
 
@@ -419,4 +419,3 @@ plt.show()
 print("\n" + "=" * 70)
 print("PIPELINE COMPLETED SUCCESSFULLY!")
 print("=" * 70)
-

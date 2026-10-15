@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'          # desactiva mensajes de oneDNN
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'           # silencia logs de TF (0=all, 3=only errors)
 import joblib
@@ -16,8 +17,9 @@ Weather data provided by the Max Planck Institute for Biogeochemistry, Jena, Ger
 under the Creative Commons Attribution 4.0 International (CC BY 4.0) license.
 """
 
-data_file = "data/jena_daily_temp_2009_2017.csv"
-model_dir = "models"
+script_dir = Path(__file__).resolve().parent
+data_file = script_dir / "data" / "jena_daily_temp_2009_2017.csv"
+model_dir = script_dir / "models"
 
 ### SLIDING WINDOW CONFIGURATION
 WINDOW  = 365  # days
@@ -99,15 +101,14 @@ test_ts = ts["2017"]
 # 2. 3. AVOID RETRAINING IF MODEL ALREADY EXISTS
 #########################################################################
 
-os.makedirs(model_dir, exist_ok=True)
-model_file = (
-   f"{model_dir}/"
+model_dir.mkdir(parents=True, exist_ok=True)
+model_file = model_dir / (
    f"gru_w{WINDOW}_h{HORIZON}_s{STRIDE}_"
    f"u{GRU_UNITS}_e{EPOCHS}_b{BATCH_SIZE}.keras"
 )
-scaler_file = model_file.replace(".keras", ".scaler")
+scaler_file = model_file.with_suffix(".scaler")
 
-if os.path.exists(model_file) and os.path.exists(scaler_file):
+if model_file.is_file() and scaler_file.is_file():
    print(f"\n=== Loading existing model ===\n")
 
    print(f"Loading model: {model_file}")
