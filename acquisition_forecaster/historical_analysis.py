@@ -1,7 +1,7 @@
 from pystac_client import Client
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta  # for month intervals
 import json
 import os
@@ -11,11 +11,13 @@ CATALOG = Client.open("https://earth-search.aws.element84.com/v1")
 
 
 def acquire(project):
-    config = json.load(open(f"acquisition_forecaster/projects/{project}/input/config.json"))
+    with open(f"acquisition_forecaster/projects/{project}/input/config.json") as config_file:
+        config = json.load(config_file)
     pt = Point(config["POINT"][0], config["POINT"][1])
 
     start_date = datetime.strptime(config["START_DATE"], "%Y-%m-%d")
-    end_date = datetime.strptime(config["END_DATE"], "%Y-%m-%d")
+    # Include the full END_DATE, including when START_DATE and END_DATE match.
+    end_date = datetime.strptime(config["END_DATE"], "%Y-%m-%d") + timedelta(days=1)
 
     chunk_size = relativedelta(months=3)    # Chunk the query to prevent overloading the server
 
@@ -40,6 +42,13 @@ def acquire(project):
             print(f"Error on {date_range}: {e}")
 
         current_start = current_end
+
+    if not all_items:
+        print(f"No acquisitions found for {project} between "
+              f"{config['START_DATE']} and {config['END_DATE']}. "
+              "Historical analysis only includes acquisitions already in the catalog; "
+              "use plan_parser for planned acquisitions.")
+        return
 
     data = []
     for item in all_items:
